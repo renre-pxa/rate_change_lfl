@@ -1,13 +1,14 @@
 -- ==============================================================================================================
--- 06_reporting.sql: rate change, data volume by step, checks (views, nothing is computed)
--- Objects (views): 12_rate_change_summary, 13_rate_change_funnel, 14_rate_change_qa_checks. They always show the latest stored tables.
+-- 06_reporting.sql: rate change, data volume by step, checks (tables, nothing is computed)
+-- Objects (tables): 12_rate_change_summary, 13_rate_change_funnel, 14_rate_change_qa_checks. Rebuild after the core tables change.
 -- ==============================================================================================================
 
 -- @object 12_rate_change_summary
--- View 12_rate_change_summary: rate on line change of like-for-like renewals by year pair, plus the total.
+-- Table 12_rate_change_summary: rate on line change of like-for-like renewals by year pair, plus the total.
 -- rate on line = premium / client limit. change_in_rol = (total premium t+1 / total limit t+1) / (total premium t / total limit t) - 1.
 -- Raw: not adjusted for exposure or layer height, and mixes primary and excess. Select one representative per position before slicing pairs.
-CREATE OR REPLACE VIEW "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."12_rate_change_summary" AS
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."12_rate_change_summary";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."12_rate_change_summary" AS
 WITH pairs AS (
     SELECT CONCAT(CAST(policy_year AS VARCHAR), '-', CAST(next_policy_year AS VARCHAR)) AS year_pair,
            position_premium AS premium_t, next_position_premium AS premium_t1,
@@ -49,8 +50,9 @@ SELECT
 FROM pairs;
 
 -- @object 13_rate_change_funnel
--- View 13_rate_change_funnel: data volume by high-level step (rows, positions, candidates, renewals, layers) with premium and client limit.
-CREATE OR REPLACE VIEW "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."13_rate_change_funnel" AS
+-- Table 13_rate_change_funnel: data volume by high-level step (rows, positions, candidates, renewals, layers) with premium and client limit.
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."13_rate_change_funnel";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."13_rate_change_funnel" AS
 SELECT 1 AS step_no, 'Source rows (policy_id)' AS what, COUNT(*) AS n_out,
        SUM(client_premium) AS premium, SUM(client_limit) AS client_limit
 FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo"
@@ -80,8 +82,9 @@ SELECT 7, 'Layers across cedants (distinct layer_id)', COUNT(DISTINCT layer_id),
 FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position";
 
 -- @object 14_rate_change_qa_checks
--- View 14_rate_change_qa_checks: one row per check, check_value should equal expected.
-CREATE OR REPLACE VIEW "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."14_rate_change_qa_checks" AS
+-- Table 14_rate_change_qa_checks: one row per check, check_value should equal expected.
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."14_rate_change_qa_checks";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."14_rate_change_qa_checks" AS
 SELECT 'position_id unique' AS check_name,
        (SELECT COUNT(*) - COUNT(DISTINCT position_id) FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position") AS check_value, 0 AS expected
 UNION ALL

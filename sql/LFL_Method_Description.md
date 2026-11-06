@@ -40,7 +40,7 @@ The result is a table with one row per source `policy_id`. Each row shows the po
 
 | # | Object | One row per | Built from |
 |---|---|---|---|
-| 01 | `01_rate_change_params` (view) | the whole run | constants |
+| 01 | `01_rate_change_params` (table) | the whole run | constants |
 | 02 | `02_lfl_row_geo` | source row | base data |
 | 03 | `03_lfl_row_cluster` | source row of a multi-row position | 02 |
 | 04 | `04_lfl_position` | position | 02, 03 |
@@ -49,13 +49,13 @@ The result is a table with one row per source `policy_id`. Each row shows the po
 | 07 | `07_lfl_layer_position` | position | 04, 06 |
 | 08 | `08_lfl_policy_out` | source row | 02, 03, 04, 05, 06, 07 |
 
-The three deployment files group these into phases: data preparation (01 to 06), layer assignment (07) and policy output (08). Objects 01 to 08 are in `Sandbox_lake`; optional reporting views 12 to 14 also target that location.
+The three deployment files group these into phases: data preparation (01 to 06), layer assignment (07) and policy output (08). Objects 01 to 08 are tables in `Sandbox_lake`; optional reporting/QA tables 12 to 14 also target that location.
 
 The runner submits each statement as a separate Dremio job and waits for it, so each stored table is a materialization boundary. For layer assignment it first creates table 07 empty, then repeats the INSERT once per policy year (section 11).
 
 ## 5. Parameters
 
-All tolerances sit in one row in `01_rate_change_params`.
+All tolerances sit in one row in the `01_rate_change_params` table.
 
 | Parameter | Value | Where it is used |
 |---|---|---|

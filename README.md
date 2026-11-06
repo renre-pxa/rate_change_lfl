@@ -23,12 +23,12 @@ Component files in `sql/source/`:
 
 | Component | Goes into bundle | Objects |
 |---|---|---|
-| `01_setup.sql` | `01_data_prep.sql` | 01 `01_rate_change_params` (view) |
+| `01_setup.sql` | `01_data_prep.sql` | 01 `01_rate_change_params` (table) |
 | `02_positions.sql` | `01_data_prep.sql` | 02 `02_lfl_row_geo`, 03 `03_lfl_row_cluster`, 04 `04_lfl_position` |
 | `03_renewals.sql` | `01_data_prep.sql` | 05 `05_lfl_candidate`, 06 `06_lfl_renewal` |
 | `04_layers.sql` | `02_layer_assignment.sql` | 07 `07_lfl_layer_position` |
 | `05_outputs.sql` | `03_policy_output.sql` | 08 `08_lfl_policy_out` |
-| `06_reporting.sql` | none | Optional views 12 to 14 in `Sandbox_lake`: summary, funnel, QA checks. The runner does not run them |
+| `06_reporting.sql` | none | Optional tables 12 to 14 in `Sandbox_lake`: summary, funnel, QA checks. The runner does not run them |
 
 ## Requirements
 
@@ -39,7 +39,7 @@ Component files in `sql/source/`:
 
 ## Dremio storage locations
 
-- The parameter view `01_rate_change_params`, stored tables `02_lfl_row_geo` to `08_lfl_policy_out`, and optional views `12_rate_change_summary` to `14_rate_change_qa_checks` are in `"Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"`.
+- The parameter table `01_rate_change_params`, stored tables `02_lfl_row_geo` to `08_lfl_policy_out`, and optional tables `12_rate_change_summary` to `14_rate_change_qa_checks` are in `"Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"`.
 - The source data is read from `MarketDataStore.Business.Lumen."RateChange_Calcs"."RateChange_Base_Data"` and is never modified.
 - Deploy the generated bundles in `sql/`. The files in `sql/source/` are assembled by `build_phases.py` without changing their Dremio paths.
 
@@ -47,11 +47,11 @@ Component files in `sql/source/`:
 
 The pipeline has three phases:
 
-1. **Data preparation** (`01_data_prep.sql`, objects 01 to 06). Creates the parameter view and rebuilds the stored tables 02 to 06.
+1. **Data preparation** (`01_data_prep.sql`, objects 01 to 06). Creates the parameter table and rebuilds the stored tables 02 to 06.
 2. **Layer assignment** (`02_layer_assignment.sql`, object 07). Recreates table 07 empty, then runs the INSERT once per policy year, earliest first, until no year remains.
 3. **Policy output** (`03_policy_output.sql`, object 08). Builds the one-row-per-source-policy table.
 
-The runner submits each marked statement as a separate Dremio job and waits for it to finish before the next one starts, so each stored table is a materialization boundary. Views 12 to 14 are not run.
+The runner submits each marked statement as a separate Dremio job and waits for it to finish before the next one starts, so each stored table is a materialization boundary. Optional tables 12 to 14 are not run.
 
 ## Set up PowerShell
 

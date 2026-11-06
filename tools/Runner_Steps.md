@@ -41,11 +41,11 @@ Paste your token when prompted.
 
 The runner executes these phases in order:
 
-1. `sql/01_data_prep.sql`: creates parameter view 01 and rebuilds stored tables 02-06.
+1. `sql/01_data_prep.sql`: creates parameter table 01 and rebuilds stored tables 02-06.
 2. `sql/02_layer_assignment.sql`: recreates table 07 and inserts one policy year per iteration until none remain.
 3. `sql/03_policy_output.sql`: builds the one-row-per-source-policy output table 08.
 
-Each marked SQL statement is submitted as a separate Dremio job and awaited before the next statement. The parameter view 01 and tables 02-08 are stored in `Sandbox_lake`. A full rebuild replaces calculated tables but does not modify the source base data. Optional reporting and QA views 12-14 also target `Sandbox_lake`, but are not run by the runner.
+Each marked SQL statement is submitted as a separate Dremio job and awaited before the next statement. Parameter table 01 and tables 02-08 are stored in `Sandbox_lake`. A full rebuild replaces calculated tables but does not modify the source base data. Optional reporting and QA tables 12-14 also target `Sandbox_lake`, but are not run by the runner.
 
 ## 4. Check completion
 
