@@ -1,8 +1,8 @@
 -- ==============================================================================================================
 -- 04_layers.sql: layer ids across cedants, tracked over time
 -- Objects: 07_lfl_layer_position (one table, filled by INSERT, in the Sandbox_lake source: the only one that accepts INSERT). Reads 04_lfl_position, 06_lfl_renewal and 01_rate_change_params.
--- Run order: the first statement (re)creates the EMPTY table, the second (an INSERT) is run once per policy year, in order, until it
--- inserts 0 rows. It needs no edit when a new policy year arrives: it always processes the earliest year not yet in the table.
+-- Run order: the first statement (re)creates the EMPTY table, the second (an INSERT) is run once per policy year, in order, until no
+-- policy year remains. It needs no edit when a new policy year arrives: it always processes the earliest year not yet in the table.
 -- ==============================================================================================================
 
 -- @object 07_lfl_layer_position
@@ -16,7 +16,7 @@ WHERE 1 = 0;
 
 -- @insert 07_lfl_layer_position
 -- Layer ids of ONE policy year: the earliest year of 04_lfl_position that is not in 07_lfl_layer_position yet. Run it once per policy year,
--- in order (the scheduler repeats it until it inserts 0 rows, running it again later is harmless). It reads last year's layers from the table itself.
+-- in order (the runner repeats it until no policy year remains, running it again later is harmless). It reads last year's layers from the table itself.
 -- 1) renewal: a position that is the renewal of a prior-year position (same cedant, from 06_lfl_renewal) takes that position's layer_id.
 -- 2) scan: any other position takes the prior-year layer of its stack whose MEDIAN attachment and height are within scan_tol
 --    (lowest score, ties by layer_id). Stacks with more than max_scope_positions layers in the prior year are not scanned.

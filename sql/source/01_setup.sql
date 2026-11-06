@@ -1,14 +1,14 @@
 -- ==============================================================================================================
 -- 01_setup.sql: parameters (a view, nothing is computed)
 -- Run the statements of this file, then 02 to 06 in order. Every statement is executable as it stands.
--- Object: 01_rate_change_params (view). Location of every object: Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update" (tools/names.py).
+-- Object: 01_rate_change_params (view). Location of every object: Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update".
 -- Names start with the run order number, lfl = an object of the like-for-like calculation, rate_change = generic (parameters, reporting).
 -- The base data is taken as given and is read directly by 02_lfl_row_geo from MarketDataStore.Business.Lumen."RateChange_Calcs"."RateChange_Base_Data".
--- Docs: docs/02_DEPLOYMENT.md (run order), docs/03_TECHNICAL_REFERENCE.md (rules and columns).
+-- Docs: README.md (run order and deployment), sql/LFL_Method_Description.md (rules and columns).
 -- ==============================================================================================================
 
 -- @object 01_rate_change_params
--- View 01_rate_change_params: every tolerance and threshold of the stack, one row (docs/03_TECHNICAL_REFERENCE.md section 1).
+-- View 01_rate_change_params: every tolerance and threshold of the stack, one row (sql/LFL_Method_Description.md section 5).
 CREATE OR REPLACE VIEW Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params" AS
 SELECT
     CAST(0.005 AS DOUBLE) AS geo_tol,        -- within a stack-year: attachment, then height, chained gap tolerance (same layer shape)

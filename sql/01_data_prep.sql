@@ -2,14 +2,14 @@
 -- ==============================================================================================================
 -- 01_setup.sql: parameters (a view, nothing is computed)
 -- Run the statements of this file, then 02 to 06 in order. Every statement is executable as it stands.
--- Object: 01_rate_change_params (view). Location of every object: Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update" (tools/names.py).
+-- Object: 01_rate_change_params (view). Location of every object: Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update".
 -- Names start with the run order number, lfl = an object of the like-for-like calculation, rate_change = generic (parameters, reporting).
 -- The base data is taken as given and is read directly by 02_lfl_row_geo from MarketDataStore.Business.Lumen."RateChange_Calcs"."RateChange_Base_Data".
--- Docs: docs/02_DEPLOYMENT.md (run order), docs/03_TECHNICAL_REFERENCE.md (rules and columns).
+-- Docs: README.md (run order and deployment), sql/LFL_Method_Description.md (rules and columns).
 -- ==============================================================================================================
 
 -- @object 01_rate_change_params
--- View 01_rate_change_params: every tolerance and threshold of the stack, one row (docs/03_TECHNICAL_REFERENCE.md section 1).
+-- View 01_rate_change_params: every tolerance and threshold of the stack, one row (sql/LFL_Method_Description.md section 5).
 CREATE OR REPLACE VIEW Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params" AS
 SELECT
     CAST(0.005 AS DOUBLE) AS geo_tol,        -- within a stack-year: attachment, then height, chained gap tolerance (same layer shape)
@@ -37,7 +37,7 @@ SELECT
 -- stack-year-cedant scope with more than one row can hold a multi-row position, so only those rows go through the sorts
 -- (scope_rows > 1): a row alone in its scope is its own position (position_id = policy_id, position_rows = 1) and skips every window pass.
 -- Layer shape (geometry group), inside a scope: rows sorted by attachment, a new group starts when the gap to the previous row exceeds
--- geo_tol of that row (chained gaps, LAG + running SUM, the pattern of the existing stack), then the same on height inside each attachment group.
+-- geo_tol of that row (chained gaps, LAG + running SUM), then the same on height inside each attachment group.
 -- position_id = lowest policy_id of the position (unique, the key of every later table).
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo" AS
@@ -194,7 +194,7 @@ CROSS JOIN p;
 
 -- @object 04_lfl_position
 -- Table 04_lfl_position: one row per position = one cedant's effective policy in one layer shape (geometry group) of one stack and year.
--- eff_premium and eff_client_limit belong to the position, they are built from its source rows (02a for positions with several rows).
+-- eff_premium and eff_client_limit belong to the position, they are built from its source rows (03_lfl_row_cluster for positions with several rows).
 -- Single-row positions pass through. eff_client_share = eff_client_limit / full_limit (the effective share of the position, after the
 -- largest-limit rule), share_over_100 = 1 when it exceeds 1 + share_tol.
 -- scope_positions = positions of the same stack, cedant and year (guard against oversized scopes in the matching).
@@ -254,7 +254,7 @@ CROSS JOIN p;
 -- Source component: 03_renewals.sql
 -- ==============================================================================================================
 -- 03_renewals.sql: renewal candidates, premium gate, 1:1 matching
--- Objects (stored tables): 05_lfl_candidate, 06_lfl_renewal. 06_lfl_renewal is GENERATED (tools/generate_sql.py --rounds N): do not edit by hand.
+-- Objects (stored tables): 05_lfl_candidate, 06_lfl_renewal. 06_lfl_renewal is the same matching round written out four times (m1 to m4). Changing the number of rounds means editing this file directly.
 -- ==============================================================================================================
 
 -- @object 05_lfl_candidate
@@ -262,7 +262,7 @@ CROSS JOIN p;
 -- A pair is listed when attachment AND height are each within renewal_tol of the prior position's value.
 -- score = attachment gap / tolerance + height gap / tolerance (lower is better, premium is not in the score).
 -- rol_ratio = rate on line next / prior, gate_ok = 1 when it is within [1/rol_gate, rol_gate] (the premium gate).
--- Pairs that fail the gate are kept here (gate_ok = 0) for audit, only gate_ok = 1 enters the matching (03b).
+-- Pairs that fail the gate are kept here (gate_ok = 0) for audit, only gate_ok = 1 enters the matching (06_lfl_renewal).
 -- Joins are on plain columns (stack_hash, root_basic_id, next_year = policy_year) so Dremio plans hash joins.
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate" AS
@@ -297,13 +297,13 @@ CROSS JOIN p
 WHERE ABS(b.attachment - a.attachment) <= p.renewal_tol * a.attachment
   AND ABS(b.height - a.height) <= p.renewal_tol * a.height;
 
--- BEGIN GENERATED renewal (tools/generate_sql.py)
+-- BEGIN renewal matching rounds
 -- @object 06_lfl_renewal
 -- Table 06_lfl_renewal: accepted like-for-like renewals (position t -> position t+1, same stack and cedant), 1:1.
 -- Candidates that passed the rate-on-line gate are ranked by (score, prior_id, next_id). A round accepts every candidate
 -- that is the best remaining candidate of BOTH its prior and its next position, then drops the other candidates that
--- touch an accepted position. 4 rounds are unrolled (GENERATED by tools/generate_sql.py --rounds 4), candidates still
--- open after the last round stay unmatched (docs/03_TECHNICAL_REFERENCE.md section 6.2, check in the view 15_rate_change_qa_checks).
+-- touch an accepted position. 4 rounds are written out one after another, candidates still
+-- open after the last round stay unmatched (checked in view 14_rate_change_qa_checks, see sql/LFL_Method_Description.md section 10).
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" AS
 WITH cand AS (
@@ -353,4 +353,4 @@ SELECT prior_id, next_id, stack_hash, root_basic_id, prior_year, prior_year + 1 
 FROM m4
 WHERE final_round IS NOT NULL;
 
--- END GENERATED renewal
+-- END renewal matching rounds

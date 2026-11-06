@@ -12,7 +12,7 @@
 -- stack-year-cedant scope with more than one row can hold a multi-row position, so only those rows go through the sorts
 -- (scope_rows > 1): a row alone in its scope is its own position (position_id = policy_id, position_rows = 1) and skips every window pass.
 -- Layer shape (geometry group), inside a scope: rows sorted by attachment, a new group starts when the gap to the previous row exceeds
--- geo_tol of that row (chained gaps, LAG + running SUM, the pattern of the existing stack), then the same on height inside each attachment group.
+-- geo_tol of that row (chained gaps, LAG + running SUM), then the same on height inside each attachment group.
 -- position_id = lowest policy_id of the position (unique, the key of every later table).
 DROP TABLE IF EXISTS Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo";
 CREATE TABLE Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo" AS
@@ -169,7 +169,7 @@ CROSS JOIN p;
 
 -- @object 04_lfl_position
 -- Table 04_lfl_position: one row per position = one cedant's effective policy in one layer shape (geometry group) of one stack and year.
--- eff_premium and eff_client_limit belong to the position, they are built from its source rows (02a for positions with several rows).
+-- eff_premium and eff_client_limit belong to the position, they are built from its source rows (03_lfl_row_cluster for positions with several rows).
 -- Single-row positions pass through. eff_client_share = eff_client_limit / full_limit (the effective share of the position, after the
 -- largest-limit rule), share_over_100 = 1 when it exceeds 1 + share_tol.
 -- scope_positions = positions of the same stack, cedant and year (guard against oversized scopes in the matching).

@@ -1,0 +1,14 @@
+# Runner lock file (created while a run is active)
+.dremio-run.lock
+
+# Run logs
+logs/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local environment files and credentials
+.env
+*.token

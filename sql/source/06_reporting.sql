@@ -80,7 +80,7 @@ SELECT 7, 'Layers across cedants (distinct layer_id)', COUNT(DISTINCT layer_id),
 FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position";
 
 -- @object 14_rate_change_qa_checks
--- View 14_rate_change_qa_checks: one row per check, check_value should equal expected (docs/03_TECHNICAL_REFERENCE.md section 9).
+-- View 14_rate_change_qa_checks: one row per check, check_value should equal expected.
 CREATE OR REPLACE VIEW Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."14_rate_change_qa_checks" AS
 SELECT 'position_id unique' AS check_name,
        (SELECT COUNT(*) - COUNT(DISTINCT position_id) FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position") AS check_value, 0 AS expected
@@ -103,7 +103,7 @@ UNION ALL
 SELECT 'renewal is 1:1 (next positions used more than once)',
        (SELECT COUNT(*) FROM (SELECT next_id FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" GROUP BY next_id HAVING COUNT(*) > 1) x), 0
 UNION ALL
-SELECT 'candidates still open after the last matching round (raise --rounds if > 0)',
+SELECT 'candidates still open after the last matching round (more matching rounds needed if > 0)',
        (SELECT COUNT(*) FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate" c
         LEFT JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" r1 ON r1.prior_id = c.prior_id
         LEFT JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" r2 ON r2.next_id = c.next_id

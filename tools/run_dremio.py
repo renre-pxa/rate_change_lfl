@@ -1,12 +1,14 @@
 """Run the LFL SQL stack through the Dremio Software REST API (Python 3.10+)."""
 
 import argparse
+import getpass
 import json
 import logging
 import os
 from pathlib import Path
 import re
 import sqlite3
+import sys
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlsplit
@@ -17,6 +19,7 @@ LOG = logging.getLogger("lfl")
 FILES = (
     "01_data_prep.sql", "02_layer_assignment.sql", "03_policy_output.sql",
 )
+DEFAULT_DREMIO_URL = "https://dremio.renre.com:9047"
 MARKER = re.compile(r"^-- @(object|insert) (\w+)\s*$", re.MULTILINE)
 
 
@@ -147,6 +150,20 @@ def run_sections(client, sections):
             client.execute(statement)
 
 
+def get_token():
+    token = os.environ.get("DREMIO_TOKEN")
+    if not token:
+        if not sys.stdin.isatty():
+            raise ValueError("No terminal to ask for the Dremio token; set DREMIO_TOKEN in the environment")
+        token = getpass.getpass("Dremio personal token (input is hidden): ")
+    token = token.strip()
+    if not token:
+        raise ValueError("No Dremio token entered")
+    if re.search(r"\s|[\x00-\x1f\x7f]", token):
+        raise ValueError("The Dremio token contains spaces or control characters; copy it again")
+    return token
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sql-dir", type=Path, default=Path(__file__).resolve().parents[1] / "sql")
@@ -175,10 +192,8 @@ def main(argv=None):
         if args.dry_run:
             LOG.info("Dry run only. Full mode runs phases 01-03; layers runs phase 02; outputs runs phase 03. Reporting and QA are excluded.")
             return 0
-        token = os.environ.get("DREMIO_TOKEN")
-        base_url = os.environ.get("DREMIO_URL")
-        if not token or not base_url:
-            raise ValueError("Set DREMIO_URL and DREMIO_TOKEN in the runner's environment")
+        base_url = os.environ.get("DREMIO_URL") or DEFAULT_DREMIO_URL
+        token = get_token()
         client = Dremio(base_url, token, args.poll_seconds, args.job_timeout)
         with args.lock_file.open("x", encoding="utf-8") as lock:
             json.dump({"pid": os.getpid(), "mode": args.mode, "started": time.time()}, lock)

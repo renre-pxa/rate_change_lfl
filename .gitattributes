@@ -1,0 +1,4 @@
+# Keep line endings consistent so rebuilt bundles do not show spurious diffs
+*.sql text eol=lf
+*.py text eol=lf
+*.md text eol=lf
