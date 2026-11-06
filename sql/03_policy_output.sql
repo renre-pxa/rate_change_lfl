@@ -6,7 +6,7 @@
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."08_lfl_policy_out";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."08_lfl_policy_out" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 maxy AS (
     SELECT MAX(policy_year) AS max_year

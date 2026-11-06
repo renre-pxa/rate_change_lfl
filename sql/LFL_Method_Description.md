@@ -49,7 +49,7 @@ The result is a table with one row per source `policy_id`. Each row shows the po
 | 07 | `07_lfl_layer_position` | position | 04, 06 |
 | 08 | `08_lfl_policy_out` | source row | 02, 03, 04, 05, 06, 07 |
 
-The three deployment files group these into phases: data preparation (01 to 06), layer assignment (07) and policy output (08). Parameter view 01 is in `Sandbox`; tables 02 to 08 are in `Sandbox_lake`.
+The three deployment files group these into phases: data preparation (01 to 06), layer assignment (07) and policy output (08). Objects 01 to 08 are in `Sandbox_lake`; optional reporting views 12 to 14 also target that location.
 
 The runner submits each statement as a separate Dremio job and waits for it, so each stored table is a materialization boundary. For layer assignment it first creates table 07 empty, then repeats the INSERT once per policy year (section 11).
 
@@ -314,5 +314,5 @@ Take a source row and follow it:
 - `--mode outputs` rebuilds only table 08, using current tables 02 to 07.
 - `--dry-run` parses the SQL and submits nothing.
 - A lock file prevents overlapping runs. It stays in place after a failure until it is removed by hand.
-- `build_phases.py` assembles the three deployment files from the component SQL under `sql/source/`, and maps tables 02 to 06 to the `Sandbox_lake` path.
+- `build_phases.py` assembles the three deployment files from the component SQL under `sql/source/`; the source SQL already names the `Sandbox_lake` paths.
 - The reporting views 12 to 14 (summary, funnel, QA checks) are not run by the runner.

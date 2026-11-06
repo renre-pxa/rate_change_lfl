@@ -14,10 +14,10 @@
 -- Layer shape (geometry group), inside a scope: rows sorted by attachment, a new group starts when the gap to the previous row exceeds
 -- geo_tol of that row (chained gaps, LAG + running SUM), then the same on height inside each attachment group.
 -- position_id = lowest policy_id of the position (unique, the key of every later table).
-DROP TABLE IF EXISTS Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo";
-CREATE TABLE Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo" AS
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 b AS (
     SELECT
@@ -90,15 +90,15 @@ FROM single;
 -- (lowest policy_id of the cluster).
 -- One linear chain of window functions: every CTE is read exactly once (Dremio recomputes a CTE per reference). Medians are the average
 -- of the middle row(s) of the sorted cluster (ROW_NUMBER and the cluster size), not PERCENTILE_CONT.
-DROP TABLE IF EXISTS Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster";
-CREATE TABLE Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster" AS
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 m AS (
     SELECT policy_id, position_id, position_rows, stack_hash, root_basic_id, root_account_name, insured_name, policy_year, next_year,
            attachment, full_limit, height, client_limit, client_premium
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo"
     WHERE position_rows > 1
 ),
 q1 AS (
@@ -173,10 +173,10 @@ CROSS JOIN p;
 -- Single-row positions pass through. eff_client_share = eff_client_limit / full_limit (the effective share of the position, after the
 -- largest-limit rule), share_over_100 = 1 when it exceeds 1 + share_tol.
 -- scope_positions = positions of the same stack, cedant and year (guard against oversized scopes in the matching).
-DROP TABLE IF EXISTS Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position";
-CREATE TABLE Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" AS
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 single AS (
     SELECT position_id, stack_hash, root_basic_id, root_account_name, insured_name, policy_year, next_year,
@@ -185,7 +185,7 @@ single AS (
            client_premium AS eff_premium,
            client_limit AS eff_client_limit,
            CAST(client_limit AS DOUBLE) / CAST(full_limit AS DOUBLE) AS eff_client_share
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo"
     WHERE position_rows = 1
 ),
 multi AS (
@@ -203,7 +203,7 @@ multi AS (
            MIN(n_clusters) AS n_clusters,
            SUM(premium_counted) AS eff_premium,
            SUM(limit_counted) AS eff_client_limit
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster"
     GROUP BY position_id
 ),
 u AS (

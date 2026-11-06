@@ -25,7 +25,7 @@ WHERE 1 = 0;
 --    layer_assignment is first_year when the stack has no positions in the prior year (first year of the data, new stack, gap year), else new.
 INSERT INTO "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position"
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 y AS (
     SELECT MIN(policy_year) AS yr

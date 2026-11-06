@@ -2,7 +2,7 @@
 -- ==============================================================================================================
 -- 01_setup.sql: parameters (a view, nothing is computed)
 -- Run the statements of this file, then 02 to 06 in order. Every statement is executable as it stands.
--- Object: 01_rate_change_params (view). Location of every object: Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update".
+-- Object: 01_rate_change_params (view). Location of every object: "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update".
 -- Names start with the run order number, lfl = an object of the like-for-like calculation, rate_change = generic (parameters, reporting).
 -- The base data is taken as given and is read directly by 02_lfl_row_geo from MarketDataStore.Business.Lumen."RateChange_Calcs"."RateChange_Base_Data".
 -- Docs: README.md (run order and deployment), sql/LFL_Method_Description.md (rules and columns).
@@ -10,7 +10,7 @@
 
 -- @object 01_rate_change_params
 -- View 01_rate_change_params: every tolerance and threshold of the stack, one row (sql/LFL_Method_Description.md section 5).
-CREATE OR REPLACE VIEW Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params" AS
+CREATE OR REPLACE VIEW "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params" AS
 SELECT
     CAST(0.005 AS DOUBLE) AS geo_tol,        -- within a stack-year: attachment, then height, chained gap tolerance (same layer shape)
     CAST(0.005 AS DOUBLE) AS limit_tol,      -- inside a position: client limits within this are the same client share
@@ -42,7 +42,7 @@ SELECT
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 b AS (
     SELECT
@@ -118,7 +118,7 @@ FROM single;
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 m AS (
     SELECT policy_id, position_id, position_rows, stack_hash, root_basic_id, root_account_name, insured_name, policy_year, next_year,
@@ -201,7 +201,7 @@ CROSS JOIN p;
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 single AS (
     SELECT position_id, stack_hash, root_basic_id, root_account_name, insured_name, policy_year, next_year,
@@ -267,7 +267,7 @@ CROSS JOIN p;
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 a AS (
     SELECT position_id, stack_hash, root_basic_id, policy_year, next_year, attachment, height, eff_rol

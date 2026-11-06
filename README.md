@@ -12,7 +12,7 @@ This folder holds the like-for-like (LFL) logic, the runner that deploys it to D
 | `sql/01_data_prep.sql` | Deployment bundle for objects 01 to 06: parameters, positions, duplicate clean-up, effective positions, renewal candidates, renewal matching |
 | `sql/02_layer_assignment.sql` | Deployment bundle for object 07: layer ids, filled one policy year at a time |
 | `sql/03_policy_output.sql` | Deployment bundle for object 08: one row per source policy |
-| `sql/source/` | Component SQL used to build the three bundles (listed below). Not deployable directly: table paths are mapped when the bundles are built |
+| `sql/source/` | Component SQL used to build the three bundles (listed below). The builder assembles the phase bundles |
 | `sql/LFL_Method_Description.md` | Method description. The runner and the bundle build ignore it |
 | `tools/run_dremio.py` | Sequential Dremio runner |
 | `tools/build_phases.py` | Rebuilds the three bundles from `sql/source/` |
@@ -28,7 +28,7 @@ Component files in `sql/source/`:
 | `03_renewals.sql` | `01_data_prep.sql` | 05 `05_lfl_candidate`, 06 `06_lfl_renewal` |
 | `04_layers.sql` | `02_layer_assignment.sql` | 07 `07_lfl_layer_position` |
 | `05_outputs.sql` | `03_policy_output.sql` | 08 `08_lfl_policy_out` |
-| `06_reporting.sql` | none | Optional views 12 to 14: summary, funnel, QA checks. The runner does not run them |
+| `06_reporting.sql` | none | Optional views 12 to 14 in `Sandbox_lake`: summary, funnel, QA checks. The runner does not run them |
 
 ## Requirements
 
@@ -39,10 +39,9 @@ Component files in `sql/source/`:
 
 ## Dremio storage locations
 
-- The parameter view `01_rate_change_params` is in `Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"`.
-- The stored tables `02_lfl_row_geo` to `08_lfl_policy_out` are in `"Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"`.
+- The parameter view `01_rate_change_params`, stored tables `02_lfl_row_geo` to `08_lfl_policy_out`, and optional views `12_rate_change_summary` to `14_rate_change_qa_checks` are in `"Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"`.
 - The source data is read from `MarketDataStore.Business.Lumen."RateChange_Calcs"."RateChange_Base_Data"` and is never modified.
-- Deploy the generated bundles in `sql/`. The files in `sql/source/` need their path mapping applied first, which `build_phases.py` does.
+- Deploy the generated bundles in `sql/`. The files in `sql/source/` are assembled by `build_phases.py` without changing their Dremio paths.
 
 ## How the run works
 
@@ -127,7 +126,7 @@ After editing a component in `sql/source/`, rebuild the three bundles:
 & $python "$core\tools\build_phases.py"
 ```
 
-The build joins the components listed above into the three bundle files and maps tables 02 to 06 to the `Sandbox_lake` path. Parameter view 01 stays in `Sandbox`. Edit the components in `sql/source/`, not the bundles, so the next build does not overwrite the change. Commit the source change and the rebuilt bundles together.
+The build joins the components listed above into the three bundle files. All pipeline and optional reporting objects use the `Sandbox_lake` path. Edit the components in `sql/source/`, not the bundles, so the next build does not overwrite the change. Commit the source change and the rebuilt bundles together.
 
 ## Reading the output
 

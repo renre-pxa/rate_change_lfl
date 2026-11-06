@@ -5,21 +5,21 @@
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."08_lfl_policy_out";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."08_lfl_policy_out" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 maxy AS (
     SELECT MAX(policy_year) AS max_year
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
 ),
 cand AS (
     SELECT prior_id, COUNT(*) AS n_cand, SUM(gate_ok) AS n_ok
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate"
     GROUP BY prior_id
 ),
 bf0 AS (
     SELECT prior_id, next_id, rol_ratio,
            ROW_NUMBER() OVER (PARTITION BY prior_id ORDER BY score, next_id) AS candidate_rank
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate"
     WHERE gate_ok = 0
 )
 SELECT
@@ -72,13 +72,13 @@ SELECT
     rn.rol_ratio - 1 AS rol_change_pct,
     CASE WHEN cand.n_ok = 0 THEN bf.next_id END AS gate_failed_next_id,
     CASE WHEN cand.n_ok = 0 THEN bf.rol_ratio END AS gate_rol_ratio
-FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo" g
-INNER JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" pos ON pos.position_id = g.position_id
+FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."02_lfl_row_geo" g
+INNER JOIN "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" pos ON pos.position_id = g.position_id
 INNER JOIN "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position" lp ON lp.position_id = g.position_id
-LEFT JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster" c ON c.policy_id = g.policy_id
-LEFT JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" rn ON rn.prior_id = g.position_id
-LEFT JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" rp ON rp.next_id = g.position_id
-LEFT JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" nx ON nx.position_id = rn.next_id
+LEFT JOIN "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."03_lfl_row_cluster" c ON c.policy_id = g.policy_id
+LEFT JOIN "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" rn ON rn.prior_id = g.position_id
+LEFT JOIN "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" rp ON rp.next_id = g.position_id
+LEFT JOIN "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" nx ON nx.position_id = rn.next_id
 LEFT JOIN cand ON cand.prior_id = g.position_id
 LEFT JOIN bf0 bf ON bf.prior_id = g.position_id AND bf.candidate_rank = 1
 CROSS JOIN p

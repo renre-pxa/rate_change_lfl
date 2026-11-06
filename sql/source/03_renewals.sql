@@ -10,20 +10,20 @@
 -- rol_ratio = rate on line next / prior, gate_ok = 1 when it is within [1/rol_gate, rol_gate] (the premium gate).
 -- Pairs that fail the gate are kept here (gate_ok = 0) for audit, only gate_ok = 1 enters the matching (06_lfl_renewal).
 -- Joins are on plain columns (stack_hash, root_basic_id, next_year = policy_year) so Dremio plans hash joins.
-DROP TABLE IF EXISTS Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate";
-CREATE TABLE Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate" AS
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate" AS
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 a AS (
     SELECT position_id, stack_hash, root_basic_id, policy_year, next_year, attachment, height, eff_rol
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
     CROSS JOIN p
     WHERE scope_positions <= p.max_scope_positions
 ),
 b AS (
     SELECT position_id, stack_hash, root_basic_id, policy_year, attachment, height, eff_rol
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
     CROSS JOIN p
     WHERE scope_positions <= p.max_scope_positions
 )
@@ -50,11 +50,11 @@ WHERE ABS(b.attachment - a.attachment) <= p.renewal_tol * a.attachment
 -- that is the best remaining candidate of BOTH its prior and its next position, then drops the other candidates that
 -- touch an accepted position. 4 rounds are written out one after another, candidates still
 -- open after the last round stay unmatched (checked in view 14_rate_change_qa_checks, see sql/LFL_Method_Description.md section 10).
-DROP TABLE IF EXISTS Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal";
-CREATE TABLE Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" AS
+DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal";
+CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" AS
 WITH cand AS (
     SELECT prior_id, next_id, stack_hash, root_basic_id, prior_year, score, rol_ratio
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."05_lfl_candidate"
     WHERE gate_ok = 1
 ),
 m0 AS (SELECT c.*, CAST(NULL AS INTEGER) AS match_round FROM cand c),

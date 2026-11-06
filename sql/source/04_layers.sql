@@ -11,7 +11,7 @@
 DROP TABLE IF EXISTS "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position";
 CREATE TABLE "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position" AS
 SELECT position_id, stack_hash, policy_year, attachment, height, position_id AS layer_id, CAST('x' AS VARCHAR) AS layer_assignment
-FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
+FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
 WHERE 1 = 0;
 
 -- @insert 07_lfl_layer_position
@@ -24,16 +24,16 @@ WHERE 1 = 0;
 --    layer_assignment is first_year when the stack has no positions in the prior year (first year of the data, new stack, gap year), else new.
 INSERT INTO "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position"
 WITH p AS (
-    SELECT * FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
+    SELECT * FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."01_rate_change_params"
 ),
 y AS (
     SELECT MIN(policy_year) AS yr
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position"
     WHERE policy_year > COALESCE((SELECT MAX(policy_year) FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."07_lfl_layer_position"), 0)
 ),
 pos AS (
     SELECT s.position_id, s.stack_hash, s.attachment, s.height, y.yr AS policy_year
-    FROM Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" s
+    FROM "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."04_lfl_position" s
     CROSS JOIN y
     WHERE s.policy_year = y.yr
 ),
@@ -46,7 +46,7 @@ prior AS (
 inh AS (
     SELECT pos.position_id, pos.stack_hash, pr.layer_id, 'renewal' AS layer_assignment
     FROM pos
-    INNER JOIN Sandbox.Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" r ON r.next_id = pos.position_id
+    INNER JOIN "Sandbox_lake".Underwriting.Lumen.Casualty."Rate_Change"."Method_Update"."06_lfl_renewal" r ON r.next_id = pos.position_id
     INNER JOIN prior pr ON pr.position_id = r.prior_id
 ),
 prior_med AS (
